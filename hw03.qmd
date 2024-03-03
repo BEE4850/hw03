@@ -122,10 +122,10 @@ where $T_0$ is the temperature (in $^\circ C$) where sea-level is in equilibrium
 
 Suppose that we wanted to develop a Bayesian probability model for this problem, assuming independent normal residuals:
 
-$$\begin{gather*}
+\begin{gather*}
 y(t) = F(t) - \varepsilon_t \\
 \varepsilon_t \sim \mathcal{N}(0, \sigma^2)
-\end{gather*}$$
+\end{gather*}
 
 We might specify the following priors (assuming independence across parameters):
 
