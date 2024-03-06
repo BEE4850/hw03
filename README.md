@@ -4,7 +4,7 @@
 
 This is the repository for Homework 3 for [BEE 4850](https://viveks.me/simulation-data-analysis), taught at [Cornell University](https://cornell.edu) in Spring 2024 by [Vivek Srikrishnan](https://viveks.me).
 
-If enrolled in the class, a PDF of the completed assignment, **with all cells evaluated if a notebook**, should be submitted to Gradescope *no later* than Friday, March 15, 2024, at 9:00pm. The assignment will be penalized 50% if it is submitted up to 24 hours late.
+If enrolled in the class, a PDF of the completed assignment, **with all cells evaluated if a notebook**, should be submitted to Gradescope *no later* than Friday, March 22, 2024, at 9:00pm. The assignment will be penalized 50% if it is submitted up to 24 hours late.
 
 ## Learning Objectives
 
