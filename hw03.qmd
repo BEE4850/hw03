@@ -194,6 +194,6 @@ end
 
 pdo = load_pdo("data/ersst.v5.pdo.dat")
 # subset for years that match the tide gauge data
-years = dat_annmax[!, :Year]
+years = pdo[!, :Year]
 @rsubset!(pdo, :Year in years)
 ```
