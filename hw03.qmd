@@ -149,7 +149,7 @@ Following from Problem 1, compare the maximum likelihood and maximum *a posterio
 **In this problem**: 
 
 * Find the MLE and MAP parameter values using the prior distributions given in Problem 1.
-* Plot the median and 95% credible intervals for the hindcasts and the projections under RCP 8.5 (using `ERF_ssp585_1750-2500.csv`; make sure $T_0$ and $H_0$ have the same meaning as in Problem 1!). 
+* Plot the median and 95% credible intervals for the hindcasts and the projections until 2100 under RCP 8.5 (using `data/NOAA_IPCC_RCPtempsscenarios.csv`; make sure $T_0$ and $H_0$ have the same meaning as in Problem 1!). 
 * What differences do you observe? What do you attribute these differences to? What conclusions can you draw about the Bayesian model?
 
 ### Problem 3
