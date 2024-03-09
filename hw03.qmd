@@ -118,6 +118,7 @@ using Optim # optimization tools
 Consider the [Rahmstorf (2007)](https://doi.org/10.1073/pnas.0907765106) sea-level rise model from [Homework 2](https://viveks.me/simulation-data-analysis/assignments/hw02/hw02.html):
 
 $$\frac{dH(t)}{dt} = \alpha (T(t) - T_0),$$
+
 where $T_0$ is the temperature (in $^\circ C$) where sea-level is in equilibrium ($dH/dt = 0$), and $\alpha$ is the sea-level rise sensitivity to temperature. Discretizing this equation using the Euler method and using an annual timestep ($\delta t = 1$), we get $$H(t+1) = H(t) + \alpha (T(t) - T_0).$$
 
 Suppose that we wanted to develop a Bayesian probability model for this problem, assuming independent normal residuals:
@@ -183,7 +184,7 @@ $$y_t \sim \text{GEV}(\mu_0 + \mu_1 p_t, \sigma, \xi)$$
 
 function load_pdo(fname)
     # This uses the DataFramesMeta.jl package, which makes it easy to string together commands to load and process data
-    df = CSV.read(fname, DataFrame; delim=" ", header=2, ignorerepeated=true)
+    df = DataFrame(CSVFiles.load(File(format"CSV", fname), spacedelim=true, skiplines_begin=1))
     # take yearly average
     @transform!(df, :PDO = mean(AsTable(names(df)[2:13])))
     @select!(df, $[:Year, :PDO])
