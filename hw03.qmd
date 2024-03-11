@@ -137,7 +137,7 @@ We might specify the following priors (assuming independence across parameters):
 
 **In this problem**: 
 
-* Load the data from the `data/` folder
+<!-- * Load the data from the `data/` folder -->
   * Historical and RCP 8.5 global mean temperatures from NOAA can be found in `data/NOAA_IPCC_RCPtempsscenarios.csv` (use the fourth column for the temperature series).
   * Global mean sea level anomalies (relative to the 1990 mean global sea level) are in `data/CSIRO_Recons_gmsl_yr_2015.csv`, courtesy of CSIRO (<https://www.cmar.csiro.au/sealevel/sl_data_cmar.html>). 
 * Simulate from the prior predictive distribution. What do you think about the priors?
