@@ -124,7 +124,7 @@ where $T_0$ is the temperature (in $^\circ C$) where sea-level is in equilibrium
 Suppose that we wanted to develop a Bayesian probability model for this problem, assuming independent normal residuals:
 
 \begin{gather*}
-y(t) = F(t) - \varepsilon_t \\
+y(t) = F(t) + \varepsilon_t \\
 \varepsilon_t \sim \mathcal{N}(0, \sigma^2)
 \end{gather*}
 
@@ -132,7 +132,8 @@ We might specify the following priors (assuming independence across parameters):
 
 - $T_0 \sim \mathcal{N}(-0.5, 0.1)$;
 - $\alpha \sim \mathcal{TN}(0, 5; 0, \infty)$ (truncated normal between 0 and infinity);
-- $H_0 \sim \mathcal{N}(-150, 25)$.
+- $H_0 \sim \mathcal{N}(-150, 25)$;
+- $\sigma \sim \mathcal{TN}(0, 5; 0, \infty)$
 
 **In this problem**: 
 
