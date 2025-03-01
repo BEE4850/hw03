@@ -1,6 +1,6 @@
 ---
-title: "Homework 3: Bayesian and Extreme Value Statistics"
-subtitle: "BEE 4850/5850, Fall 2024"
+title: "Homework 3: Bayesian Models and Monte Carlo"
+subtitle: "BEE 4850/5850, Spring 2025"
 format:
     html:        
         warning: true
@@ -27,7 +27,7 @@ format:
     ipynb:
         warning: true
         error: true
-jupyter: julia-1.9
+engine: julia
 format-links: [pdf]
 freeze: false
 ---
@@ -41,13 +41,13 @@ freeze: false
 ::: {.callout-important icon=false}
 ### Due Date
 
-Friday, 3/22/24, 9:00pm
+Friday, 2/21/25, 9:00pm
 :::
 
 ::: {.content-visible unless-format="ipynb"}
 :::{.callout-tip}
 
-To do this assignment in Julia, you can find a Jupyter notebook with an appropriate environment in [the homework's Github repository]({{< var github_org.repo >}}/hw03). Otherwise, you will be responsible for setting up an appropriate package environment in the language of your choosing. Make sure to include your name and NetID on your solution.
+To do this assignment in Julia, you can find a Jupyter notebook with an appropriate environment in [the homework's Github repository]({{< var github_org.repo >}}/hw02). Otherwise, you will be responsible for setting up an appropriate package environment in the language of your choosing. Make sure to include your name and NetID on your solution.
 :::
 :::
 
@@ -59,21 +59,13 @@ To do this assignment in Julia, you can find a Jupyter notebook with an appropri
 
 The goal of this homework assignment is to practice developing and working with probability models for data.
 
+* Problem 1 asks you to fit a sea-level rise model using normal residuals and to assess the validity of that assumption.
+* Problem 2 asks you to model the time series of hourly weather-related variability at a tide gauge using an autoregressive model.
+* Problem 3 asks you to use Poisson regression to predict salamander counts based on environmental data.
+* Problem 4 (only required for students in BEE 5850) asks you to look at the impact of the gender of hurricane names on deaths^[Yes, seriously. Ish. Trust me, I know.].
 
 :::
 
-::: {.cell .markdown}
-
-### Learning Outcomes
-
-After completing this assignments, students will be able to:
-
-* develop probability models for data and model residuals under a variety of statistical assumptions;
-* evaluate the appropriateness of those assumptions through the use of qualitative and quantitative evaluations of goodness-of-fit;
-* fit a basic Bayesian model to data.
-
-
-:::
 
 ::: {.cell .markdown}
 ### Load Environment
@@ -100,7 +92,6 @@ The following packages are included in the environment (to help you find other s
 
 using Random # random number generation and seed-setting
 using DataFrames # tabular data structure
-using DataFramesMeta # API which can simplify chains of DataFrames transformations
 using CSVFiles # reads/writes .csv files
 using Distributions # interface to work with probability distributions
 using Plots # plotting library
@@ -109,92 +100,86 @@ using StatsPlots # some additional statistical plotting tools
 using Optim # optimization tools
 ```
 
-## Problems (Total: 30 Points for 4850; 40 for 5850)
+## Problems
+
+### Scoring
+
+* Problem 1 is worth 10 points.
+* Problem 2 is worth 10 points.
+* Problem 3 is worth 5 points.
+
 
 ### Problem 1
 
 ::: {.cell .markdown}
 
-Consider the [Rahmstorf (2007)](https://doi.org/10.1073/pnas.0907765106) sea-level rise model from [Homework 2](https://viveks.me/simulation-data-analysis/assignments/hw02/hw02.html):
+Consider the class-cheating testing procedure from [Homework 1](https://viveks.me/simulation-data-analysis/hw/hw01.html). As a reminder, the procedure is as follows:
 
-$$\frac{dH(t)}{dt} = \alpha (T(t) - T_0),$$
+> Each student flips a fair coin, with the results hidden from the interviewer. The student answers honestly if the coin comes up heads. Otherwise, if the coin comes up tails, the student flips the coin again, and answers “I did cheat” if heads, and “I did not cheat”, if tails.
 
-where $T_0$ is the temperature (in $^\circ C$) where sea-level is in equilibrium ($dH/dt = 0$), and $\alpha$ is the sea-level rise sensitivity to temperature. Discretizing this equation using the Euler method and using an annual timestep ($\delta t = 1$), we get $$H(t+1) = H(t) + \alpha (T(t) - T_0).$$
+Suppose that, after conducting the procedure on your class of 100 students, you get 28 "Yes, I cheated" responses. You are skeptical that your class is broadly engaged in cheating and have a prior belief that the probability of cheating $\theta$ is unlikely to be high. We'll express this prior using a beta distribution, $\theta \sim \Beta(3, 80)$. You would like to understand the range of cheating propensity which is consistent with your prior beliefs and the outcomes from the detection procedure.
 
-Suppose that we wanted to develop a Bayesian probability model for this problem, assuming independent normal residuals:
 
-\begin{gather*}
-y(t) = F(t) + \varepsilon_t \\
-\varepsilon_t \sim \mathcal{N}(0, \sigma^2)
-\end{gather*}
+**In this problem**:
 
-We might specify the following priors (assuming independence across parameters):
+- Construct a Bayesian probability model (based on the data-generating process from Homework 1 and our prior on the cheating probability) for the "Yes, I cheated" counts. You can compute the likelihood based on the combination of the fair coin flip and the "true" cheating probability $\theta$. How did you decide that you had conducted enough simulations for your outcome distributions to be "stable"?
+- Plot the posterior $p(\theta | y)$ using a grid approximation (looping over values of $\theta$).
+- Use rejection sampling to draw 1,000 samples from the posterior and plot the distribution of samples. How well are you capturing the posterior you obtained from the grid approximation? Would you prefer to have more samples?
+- Report the expected value of $\theta$ and its 90% credible interval. What conclusions can you draw about cheating probability and whether your belief in your class was warranted? How much uncertainty exists as a result of this privacy-protecting procedure?
+- Repeat the analysis with a less constrained prior of your choosing. How does that change your inferences and conclusions?
 
-- $T_0 \sim \mathcal{N}(-0.5, 0.1)$;
-- $\alpha \sim \mathcal{TN}(0, 5; 0, \infty)$ (truncated normal between 0 and infinity);
-- $H_0 \sim \mathcal{N}(-150, 25)$;
-- $\sigma \sim \mathcal{TN}(0, 5; 0, \infty)$
-
-**In this problem**: 
-
-<!-- * Load the data from the `data/` folder -->
-  * Historical and RCP 8.5 global mean temperatures from NOAA can be found in `data/NOAA_IPCC_RCPtempsscenarios.csv` (use the fourth column for the temperature series).
-  * Global mean sea level anomalies (relative to the 1990 mean global sea level) are in `data/CSIRO_Recons_gmsl_yr_2015.csv`, courtesy of CSIRO (<https://www.cmar.csiro.au/sealevel/sl_data_cmar.html>). 
-* Simulate from the prior predictive distribution. What do you think about the priors?
-* Would you propose new priors? If so, what might they be and why?
 :::
 
 ### Problem 2
 
-Following from Problem 1, compare the maximum likelihood and maximum *a posteriori* estimates for the model. 
+::: {.cell .markdown}
 
-**In this problem**: 
+You have been asked by a client to assess the risks of flooding to their home (which is valued at \$400,000 and only floods when the stream water levels exceed 1m). They would like to know the probability distribution of annual flood damages to their home if they do not take any preventative floodproofing measures. After some hydrologic analysis, you have developed a 40-year record of annual maximum water levels (in m) at the nearby stream. 
 
-* Find the MLE and MAP parameter values using the prior distributions given in Problem 1.
-* Plot the median and 95% credible intervals for the hindcasts and the projections until 2100 under RCP 8.5 (using `data/NOAA_IPCC_RCPtempsscenarios.csv`; make sure $T_0$ and $H_0$ have the same meaning as in Problem 1!). 
-* What differences do you observe? What do you attribute these differences to? What conclusions can you draw about the Bayesian model?
+You also have a depth-damage function for the fraction of the home's value which is damaged at varying flood depths: 
+
+$$d(h) = \mathbb{I}[h > 0] \frac{1}{1+\exp(-k(x-x_0))},$$ 
+
+where $k=0.75$ and $x_0=2.5$^[As a reminder, the indicator function $\mathbb{I}[h > 0]$ is $0$ when the condition is not satisfied (in this case, when $h=0$) and $1$ when it is satisfied.].  The graph of this function is given in the figure below.
+
+:::
+
+```{julia}
+#| fig-cap: Depth-damage function in Problems 2 and 3.
+#| output: true
+#| echo: false
+
+h = 0:0.01:5
+dd(h, k, x₀) = (h .> 0) * 1 ./ (1 .+ exp.(-k * (h .- x₀)))
+plot(h, dd(h, 0.75, 2.5), xlabel="Flood Depth (m Above Base Elevation)", ylabel="Fraction of Value Damaged", legend=false)
+ylims!(0, 1)
+```
+
+**In this problem**:
+
+- Fit a log-normal distribution to the water depth data by maximizing likelihood.
+- Use 10,000 samples from this distribution to estimate the expected damages from an annual maximum flood event using Monte Carlo simulation. Report your estimate as well as its standard error. Would you want to use more samples? Why or why not?
+
 
 ### Problem 3
 
-Let's look at how (modeled) daily maximum temperatures have (or have not) increased in Ithaca from 1850--2014. Model output from NOAA's GFDL-ESM4 climate model (one of the models used in the latest Climate Model Intercomparison Project, [CMIP6](https://colab.research.google.com/corgiredirector?site=https%3A%2F%2Fcds.climate.copernicus.eu%2Fcdsapp%23%21%2Fdataset%2Fprojections-cmip6%3Ftab%3Doverview)) is available in `data/gfdl-esm4-tempmax-ithaca.csv`. While this model output has not been bias-corrected, we won't worry about that for the purposes of this assignment.
-
-**In this problem**: 
-
-* Load and plot the temperature maxima data from `data/gfdl-esm4-tempmax-ithaca.csv`.
-* Suppose that we were interested in looking at temperature exceedances over 28°C. Decluster these occurrences and plot the number of exceedances by year. Have they increased over time? 
-* Fit a stationary GPD model for the exceedances. What does this distribution look like?
-
-### Problem 4
+::: {.cell .markdown}
 
 <span style="color:red;">GRADED FOR 5850 STUDENTS ONLY</span>
 
-In class, we modeled the annual maxima of the San Francisco tide gauge data  using a stationary GEV distribution. We could also hypothesize that the tide extremes are influenced by the [Pacific Decadal Oscillation (PDO)](https://en.wikipedia.org/wiki/Pacific_decadal_oscillation), which is a climate pattern related to the sea-surface temperatures in the Pacific Ocean (similar to the El Niño-Southern Oscillation), in the following fashion (where only the GEV location is variable):
+Next, your client would like advice on whether it would be cost-effective to elevate their home to reduce flood risks. To address this question, you will need to calculate the **net present value (NPV)** of flooding damages, which converts damages over time to a present value using a discount rate^[Discount rates reduce future monetary values to reflect the time-value of money; that is, you would rather have a bit less money today than none today and more next year, as you could save or invest that money. The actual choice of discount rates is the subject of much economic theory and plays an important role in environmental decision-making, particularly for multi-generational investments such as climate mitigation. For example, with a relatively large discount rate (such as 7%), all costs and benefits after a decade are effectively zero, which means it never appears cost-effective to e.g. reduce fossil fuel emissions.] For example, if your discount rate is 4%, a dollar next year is worth the equivalent of about 96 cents today. More generally, with a discount rate of $\gamma$ (as a decimal), a dollar of benefits in $t$ years is worth $\$(1-\gamma)^t$ today.
 
-$$y_t \sim \text{GEV}(\mu_0 + \mu_1 p_t, \sigma, \xi)$$
+The NPV of a sequence of money $x_t$ with discount rate $\gamma$ is the sum of all of the discounted values, that is, 
 
-**In this problem**: 
+$$NPV = \sum_{t=0}^T x_t (1-\gamma)^t,$$ 
 
-* Load the San Francisco tide gauge data (`data/h551.csv`) and the PDO index dataset (`data/errst.v5.pdo.dat`; this file is a space-delimited file, versus the comma-delimited `.csv` files, which can be loaded in Julia with `CSV.read(data/errst.v5.pdo.dat, DataFrame; delim=" ", header=2, ignorerepeated=true)`). The PDO data is given as monthly values; convert these to yearly indices by taking the mean. You should also drop 2023 due to the incomplete record. You can use the function at the bottom of these instructions to load the data, or adapt accordingly to a different language.
-* Find the MLE of the non-stationary GEV model and for a stationary GEV (constant $\mu$; we did this in class).
-* Discuss the difference(s) between the two fitted models based on the coefficient values (you can also bring to bear the range(s) of PDO values from the data), the 100- and 500-year return periods in 2022, and plotted hindcasts.
+where $T$ is the time horizon. We'll use a discount rate of 4% in this problem, which is typical for this type of problem, and a design horizon of 30 years.
 
-```{julia}
-#| echo: true
+For this problem, we will assume that the cost of elevating the house $\Delta h$ m is $C(\Delta h) = \mathbb{I}[h > 0](100,000 + 3,000\Delta h)$. Calculating the NPV of the benefits of elevating by $\Delta h$ m requires computing how the elevation changes the expected flooding damages over the design horizon and comparing these benefits to the elevation cost.
 
-## load the data from the file and return a DataFrame of DateTime values and gauge measurements
 
-function load_pdo(fname)
-    # This uses the DataFramesMeta.jl package, which makes it easy to string together commands to load and process data
-    df = DataFrame(CSVFiles.load(File(format"CSV", fname), spacedelim=true, skiplines_begin=1))
-    # take yearly average
-    @transform!(df, :PDO = mean(AsTable(names(df)[2:13])))
-    @select!(df, $[:Year, :PDO])
-    @rsubset!(df, :Year != 2023)
-    return df
-end
+**In this problem**:
 
-pdo = load_pdo("data/ersst.v5.pdo.dat")
-# subset for years that match the tide gauge data
-years = pdo[!, :Year]
-@rsubset!(pdo, :Year in years)
-```
+- Using the extreme water level distribution from Problem 2, use Monte Carlo simulation to estimate the NPV of expected flooding for elevation levels between 1 and 5m (you don't have to consider increments finer than 0.5m). What elevation heights pass the cost-benefit test?^[This is an example of **Monte Carlo optimization** as you are using Monte Carlo simulation to estimate the optimization objective function.] You can assume that the costs of elevation are all up front (that is, in year 0).
+
+:::
