@@ -91,7 +91,7 @@ The following packages are included in the environment (to help you find other s
 
 using Random # random number generation and seed-setting
 using DataFrames # tabular data structure
-using CSVFiles # reads/writes .csv files
+using CSV # reads/writes .csv files
 using Distributions # interface to work with probability distributions
 using Plots # plotting library
 using StatsBase # statistical quantities like mean, median, etc
