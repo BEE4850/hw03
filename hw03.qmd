@@ -41,7 +41,7 @@ freeze: false
 ::: {.callout-important icon=false}
 ### Due Date
 
-Friday, 2/21/25, 9:00pm
+Friday, 3/14/25, 9:00pm
 :::
 
 ::: {.content-visible unless-format="ipynb"}
@@ -103,8 +103,8 @@ using Optim # optimization tools
 
 ### Scoring
 
-* Problem 1 is worth 10 points.
-* Problem 2 is worth 10 points.
+* Problem 1 is worth 13 points.
+* Problem 2 is worth 7 points.
 * Problem 3 is worth 5 points.
 
 
@@ -116,7 +116,18 @@ Consider the class-cheating testing procedure from [Homework 1](https://viveks.m
 
 > Each student flips a fair coin, with the results hidden from the interviewer. The student answers honestly if the coin comes up heads. Otherwise, if the coin comes up tails, the student flips the coin again, and answers “I did cheat” if heads, and “I did not cheat”, if tails.
 
-Suppose that, after conducting the procedure on your class of 100 students, you get 28 "Yes, I cheated" responses. You are skeptical that your class is broadly engaged in cheating and have a prior belief that the probability of cheating $\theta$ is unlikely to be high. We'll express this prior using a beta distribution, $\theta \sim \Beta(3, 80)$. You would like to understand the range of cheating propensity which is consistent with your prior beliefs and the outcomes from the detection procedure.
+Suppose that, after conducting the procedure on your class of 100 students, you get 40 "Yes, I cheated" responses. You are skeptical that your class is broadly engaged in cheating and have a prior belief that the probability of cheating $\theta$ is unlikely to be high. We'll express this prior using a beta distribution, $\theta \sim \Beta(3, 40), which is shown below. You would like to understand the range of cheating propensity which is consistent with your prior beliefs and the outcomes from the detection procedure.
+
+:::
+
+```{julia}
+#| label: fig-p1-prior
+#| fig-cap: The Beta(3, 80) prior used in Problem 1.
+#| echo: false
+
+θ = 0:0.01:1
+plot(θ, pdf.(Beta(3, 40), θ), xlabel="θ", ylabel="Density", label=false)
+```
 
 
 **In this problem**:
@@ -125,21 +136,19 @@ Suppose that, after conducting the procedure on your class of 100 students, you 
 - Plot the posterior $p(\theta | y)$ using a grid approximation (looping over values of $\theta$).
 - Use rejection sampling to draw 1,000 samples from the posterior and plot the distribution of samples. How well are you capturing the posterior you obtained from the grid approximation? Would you prefer to have more samples?
 - Report the expected value of $\theta$ and its 90% credible interval. What conclusions can you draw about cheating probability and whether your belief in your class was warranted? How much uncertainty exists as a result of this privacy-protecting procedure?
-- Repeat the analysis with a less constrained prior of your choosing. How does that change your inferences and conclusions?
-
-:::
+- Repeat the analysis with a less constrained prior of your choosing. How does that change your inferences and conclusions? What does this tell you about the effectiveness of the procedure?
 
 ### Problem 2
 
 ::: {.cell .markdown}
 
-You have been asked by a client to assess the risks of flooding to their home (which is valued at \$400,000 and only floods when the stream water levels exceed 1m). They would like to know the probability distribution of annual flood damages to their home if they do not take any preventative floodproofing measures. After some hydrologic analysis, you have developed a 40-year record of annual maximum water levels (in m) at the nearby stream. 
+You have been asked by a client to assess the risks of flooding to their home (which is valued at \$400,000 and only floods when the stream water levels exceed 1.5m). They would like to know the probability distribution of annual flood damages to their home if they do not take any preventative floodproofing measures. After some hydrologic analysis, you have developed a 40-year record of annual maximum water levels (in m) at the nearby stream. 
 
 You also have a depth-damage function for the fraction of the home's value which is damaged at varying flood depths: 
 
 $$d(h) = \mathbb{I}[h > 0] \frac{1}{1+\exp(-k(x-x_0))},$$ 
 
-where $k=0.75$ and $x_0=2.5$^[As a reminder, the indicator function $\mathbb{I}[h > 0]$ is $0$ when the condition is not satisfied (in this case, when $h=0$) and $1$ when it is satisfied.].  The graph of this function is given in the figure below.
+where $k=1.25$ and $x_0=2$^[As a reminder, the indicator function $\mathbb{I}[h > 0]$ is $0$ when the condition is not satisfied (in this case, when $h=0$) and $1$ when it is satisfied.].  The graph of this function is given in the figure below.
 
 :::
 
@@ -150,7 +159,7 @@ where $k=0.75$ and $x_0=2.5$^[As a reminder, the indicator function $\mathbb{I}[
 
 h = 0:0.01:5
 dd(h, k, x₀) = (h .> 0) * 1 ./ (1 .+ exp.(-k * (h .- x₀)))
-plot(h, dd(h, 0.75, 2.5), xlabel="Flood Depth (m Above Base Elevation)", ylabel="Fraction of Value Damaged", legend=false)
+plot(h, dd(h, 1.25, 2), xlabel="Flood Depth (m Above Base Elevation)", ylabel="Fraction of Value Damaged", legend=false)
 ylims!(0, 1)
 ```
 
@@ -174,11 +183,17 @@ $$NPV = \sum_{t=0}^T x_t (1-\gamma)^t,$$
 
 where $T$ is the time horizon. We'll use a discount rate of 4% in this problem, which is typical for this type of problem, and a design horizon of 30 years.
 
-For this problem, we will assume that the cost of elevating the house $\Delta h$ m is $C(\Delta h) = \mathbb{I}[h > 0](100,000 + 3,000\Delta h)$. Calculating the NPV of the benefits of elevating by $\Delta h$ m requires computing how the elevation changes the expected flooding damages over the design horizon and comparing these benefits to the elevation cost.
+For this problem, we will assume that the cost of elevating the house $\Delta h$ m is $C(\Delta h) = \mathbb{I}[h > 0](100,000 + 2,000\Delta h)$. 
 
+:::
+
+::: {.callout-tip}
+
+Be careful about the quantity you're estimating. Calculating the benefits of elevating by $\Delta h$ m requires calculating how the elevation *changes* the expected flooding damages over the design horizon *relative to a no-heightening baseline*.
+
+:::
 
 **In this problem**:
 
-- Using the extreme water level distribution from Problem 2, use Monte Carlo simulation to estimate the NPV of elevation levels between 1 and 5m (you don't have to consider increments finer than 0.5m). What elevation heights pass the cost-benefit test? You can assume that the costs of elevation are all up front (that is, in year 0). 
-- What height (including an elevation of 0m) maximizes the NPV?^[This is an example of **Monte Carlo optimization** as you are using Monte Carlo simulation to estimate the optimization objective function.] 
-:::
+- Using the extreme water level distribution from Problem 2, use Monte Carlo simulation to estimate the NPV of the benefits of elevation levels between 0 and 5m (you don't have to consider increments finer than 0.5m). What elevation heights pass the cost-benefit test? You can assume that the costs of elevation are all up front (that is, in year 0). 
+- What height (including a possible elevation of 0m) maximizes the NPV of net benefits (benefits - ocsts)?^[This is an example of **Monte Carlo optimization** as you are using Monte Carlo simulation to estimate the optimization objective function.] 
