@@ -59,10 +59,9 @@ To do this assignment in Julia, you can find a Jupyter notebook with an appropri
 
 The goal of this homework assignment is to practice developing and working with probability models for data.
 
-* Problem 1 asks you to fit a sea-level rise model using normal residuals and to assess the validity of that assumption.
-* Problem 2 asks you to model the time series of hourly weather-related variability at a tide gauge using an autoregressive model.
-* Problem 3 asks you to use Poisson regression to predict salamander counts based on environmental data.
-* Problem 4 (only required for students in BEE 5850) asks you to look at the impact of the gender of hurricane names on deaths^[Yes, seriously. Ish. Trust me, I know.].
+* Problem 1 asks you to quantify uncertainties for a simple model using Bayesian statistics and rejection sampling.
+* Problem 2 asks you to use Monte Carlo simulation to calculate annual expected flooding damages.
+* Problem 3 (only required for students in BEE 5850) asks you to conduct cost-benefit analyses of housing elevation levels under future flooding uncertainty using Monte Carlo simulations.
 
 :::
 
@@ -122,7 +121,7 @@ Suppose that, after conducting the procedure on your class of 100 students, you 
 
 **In this problem**:
 
-- Construct a Bayesian probability model (based on the data-generating process from Homework 1 and our prior on the cheating probability) for the "Yes, I cheated" counts. You can compute the likelihood based on the combination of the fair coin flip and the "true" cheating probability $\theta$. How did you decide that you had conducted enough simulations for your outcome distributions to be "stable"?
+- Construct a Bayesian probability model (based on the data-generating process from Homework 1 and our prior on the cheating probability) for the "Yes, I cheated" counts. You can compute the likelihood based on the combination of the fair coin flip and the "true" cheating probability $\theta$. 
 - Plot the posterior $p(\theta | y)$ using a grid approximation (looping over values of $\theta$).
 - Use rejection sampling to draw 1,000 samples from the posterior and plot the distribution of samples. How well are you capturing the posterior you obtained from the grid approximation? Would you prefer to have more samples?
 - Report the expected value of $\theta$ and its 90% credible interval. What conclusions can you draw about cheating probability and whether your belief in your class was warranted? How much uncertainty exists as a result of this privacy-protecting procedure?
@@ -180,6 +179,6 @@ For this problem, we will assume that the cost of elevating the house $\Delta h$
 
 **In this problem**:
 
-- Using the extreme water level distribution from Problem 2, use Monte Carlo simulation to estimate the NPV of expected flooding for elevation levels between 1 and 5m (you don't have to consider increments finer than 0.5m). What elevation heights pass the cost-benefit test?^[This is an example of **Monte Carlo optimization** as you are using Monte Carlo simulation to estimate the optimization objective function.] You can assume that the costs of elevation are all up front (that is, in year 0).
-
+- Using the extreme water level distribution from Problem 2, use Monte Carlo simulation to estimate the NPV of elevation levels between 1 and 5m (you don't have to consider increments finer than 0.5m). What elevation heights pass the cost-benefit test? You can assume that the costs of elevation are all up front (that is, in year 0). 
+- What height (including an elevation of 0m) maximizes the NPV?^[This is an example of **Monte Carlo optimization** as you are using Monte Carlo simulation to estimate the optimization objective function.] 
 :::
