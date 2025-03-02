@@ -122,7 +122,7 @@ Suppose that, after conducting the procedure on your class of 100 students, you 
 
 ```{julia}
 #| label: fig-p1-prior
-#| fig-cap: The Beta(3, 80) prior used in Problem 1.
+#| fig-cap: The Beta(3, 40) prior used in Problem 1.
 #| echo: false
 
 θ = 0:0.01:1
