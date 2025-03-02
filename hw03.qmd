@@ -189,7 +189,7 @@ For this problem, we will assume that the cost of elevating the house $\Delta h$
 
 ::: {.callout-tip}
 
-Be careful about the quantity you're estimating. Calculating the benefits of elevating by $\Delta h$ m requires calculating how the elevation *changes* the expected flooding damages over the design horizon *relative to a no-heightening baseline*.
+Be careful about the quantity you're estimating. Calculating the benefits of elevating by $\Delta h$ m requires calculating how the elevation *changes* the flooding damages over the design horizon *relative to a no-heightening baseline*.
 
 :::
 
