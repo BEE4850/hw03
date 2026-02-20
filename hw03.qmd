@@ -1,6 +1,6 @@
 ---
-title: "Homework 3: Bayesian Models and Monte Carlo"
-subtitle: "BEE 4850/5850, Spring 2025"
+title: "Homework 3: Time Series and Extreme Values"
+subtitle: "BEE 4850/5850, Spring 2026"
 format:
     html:        
         warning: true
@@ -93,90 +93,54 @@ using Optim # optimization tools
 
 ### Problem 1
 
-::: {.cell .markdown}
 
-Consider the class-cheating testing procedure from [Homework 1](https://viveks.me/simulation-data-analysis/hw/hw01.html). As a reminder, the procedure is as follows:
+Tide gauge data is complicated to analyze because it is influenced by different harmonic processes (such as the linear cycle). In this problem, we will develop a model for this data using [NOAA data from the Sewell's Point tide gauge](https://tidesandcurrents.noaa.gov/waterlevels.html?id=8638610) outside of Norfolk, VA from `data/norfolk-hourly-surge-2015.csv`. This is hourly data (in m) from 2015 and includes both the observed data (`Verified (m)`) and the tide level predicted by NOAA's sinusoidal model for periodic variability, such as tides and other seasonal cycles (`Predicted (m)`). 
 
-> Each student flips a fair coin, with the results hidden from the interviewer. The student answers honestly if the coin comes up heads. Otherwise, if the coin comes up tails, the student flips the coin again, and answers “I did cheat” if heads, and “I did not cheat”, if tails.
+#### Problem 1.1
 
-Suppose that, after conducting the procedure on your class of 100 students, you get 40 "Yes, I cheated" responses. You are skeptical that your class is broadly engaged in cheating and have a prior belief that the probability of cheating $\theta$ is unlikely to be high. We'll express this prior using a beta distribution, $\theta \sim \Beta(3, 40), which is shown below. You would like to understand the range of cheating propensity which is consistent with your prior beliefs and the outcomes from the detection procedure.
+Load the data file. Take the difference between the observations and the sinusoidal predictions to obtain the tide level which could be attributed to weather-related variability (since for one year sea-level rise and other factors are unlikely to matter). Plot this data.
 
-:::
+#### Problem 1.2
 
-```{julia}
-#| label: fig-p1-prior
-#| fig-cap: The Beta(3, 40) prior used in Problem 1.
-#| echo: false
+Develop an autoregressive (AR) model for the weather-related variability in the Norfolk tide gauge. Make sure to include your logic or exploratory analysis used in determining the model specification and fit the model.
 
-θ = 0:0.01:1
-plot(θ, pdf.(Beta(3, 40), θ), xlabel="θ", ylabel="Density", label=false)
-```
+#### Problem 1.3
 
+Use your model to simulate 1,000 realizations of hourly tide gauge observations by adding simulations from your AR model back to the predicted sinusoidal trend. What is the distribution of the maximum tide level? How about the median tide level? How do these compare to the observed values? How do you explain your findings?
 
-**In this problem**:
-
-- Construct a Bayesian probability model (based on the data-generating process from Homework 1 and our prior on the cheating probability) for the "Yes, I cheated" counts. You can compute the likelihood based on the combination of the fair coin flip and the "true" cheating probability $\theta$. 
-- Plot the posterior $p(\theta | y)$ using a grid approximation (looping over values of $\theta$).
-- Use rejection sampling to draw 1,000 samples from the posterior and plot the distribution of samples. How well are you capturing the posterior you obtained from the grid approximation? Would you prefer to have more samples?
-- Report the expected value of $\theta$ and its 90% credible interval. What conclusions can you draw about cheating probability and whether your belief in your class was warranted? How much uncertainty exists as a result of this privacy-protecting procedure?
-- Repeat the analysis with a less constrained prior of your choosing. How does that change your inferences and conclusions? What does this tell you about the effectiveness of the procedure?
 
 ### Problem 2
 
-::: {.cell .markdown}
+Let's look at how (modeled) annual maximum temperatures have (or have not) increased in Ithaca from 1850--2014. Model output from NOAA's GFDL-ESM4 climate model (one of the models used in the latest Climate Model Intercomparison Project, [CMIP6](https://colab.research.google.com/corgiredirector?site=https%3A%2F%2Fcds.climate.copernicus.eu%2Fcdsapp%23%21%2Fdataset%2Fprojections-cmip6%3Ftab%3Doverview)) is available in `data/gfdl-esm4-tempmax-ithaca.csv`. While this model output has not been bias-corrected, we won't worry about that for the purposes of this assignment. The temperature data is in degrees Celsius, and the dates are provided as calendar dates.
 
-You have been asked by a client to assess the risks of flooding to their home (which is valued at \$400,000 and only floods when the stream water levels exceed 1.5m). They would like to know the probability distribution of annual flood damages to their home if they do not take any preventative floodproofing measures. After some hydrologic analysis, you have developed a 40-year record of annual maximum water levels (in m) at the nearby stream. 
 
-You also have a depth-damage function for the fraction of the home's value which is damaged at varying flood depths: 
+#### Problem 2.1
 
-$$d(h) = \mathbb{I}[h > 0] \frac{1}{1+\exp(-k(x-x_0))},$$ 
+Load the (daily maximum) temperature data from `data/gfdl-esm4-tempmax-ithaca.csv`. Find the modeled annual maximum temperatures and plot them.
 
-where $k=1.25$ and $x_0=2$^[As a reminder, the indicator function $\mathbb{I}[h > 0]$ is $0$ when the condition is not satisfied (in this case, when $h=0$) and $1$ when it is satisfied.].  The graph of this function is given in the figure below.
+#### Problem 2.2
 
-:::
+Fit a stationary GEV model to the annual maximum series and report your parameter estimates. Plot the fitted distribution along with the data. What type of GEV distribution did you end up with? What is the 100-year return level?
 
-```{julia}
-#| fig-cap: Depth-damage function in Problems 2 and 3.
-#| output: true
-#| echo: false
+#### Problem 2.3
 
-h = 0:0.01:5
-dd(h, k, x₀) = (h .> 0) * 1 ./ (1 .+ exp.(-k * (h .- x₀)))
-plot(h, dd(h, 1.25, 2), xlabel="Flood Depth (m Above Base Elevation)", ylabel="Fraction of Value Damaged", legend=false)
-ylims!(0, 1)
-```
-
-**In this problem**:
-
-- Fit a log-normal distribution to the water depth data by maximizing likelihood.
-- Use 10,000 samples from this distribution to estimate the expected damages from an annual maximum flood event using Monte Carlo simulation. Report your estimate as well as its standard error. Would you want to use more samples? Why or why not?
+Now fit a nonstationary GEV with respect to time (only the location parameter should be non-stationary), $y \sim \text{GEV}(\mu_0 + \mu_1 t, \sigma, \xi)$ (for scaling purposes, begin with $t=0$ corresponding to 1850). Plot how the 100 year return levels change over time. Do you get the same return level today as in Problem 2.3?
 
 
 ### Problem 3
 
-::: {.cell .markdown}
+Now let's analyze how often the Ithaca temperature data exceeds certain thresholds.
 
-<span style="color:red;">GRADED FOR 5850 STUDENTS ONLY</span>
+#### Problem 3.1
 
-Next, your client would like advice on whether it would be cost-effective to elevate their home to reduce flood risks. To address this question, you will need to calculate the **net present value (NPV)** of flooding damages, which converts damages over time to a present value using a discount rate^[Discount rates reduce future monetary values to reflect the time-value of money; that is, you would rather have a bit less money today than none today and more next year, as you could save or invest that money. The actual choice of discount rates is the subject of much economic theory and plays an important role in environmental decision-making, particularly for multi-generational investments such as climate mitigation. For example, with a relatively large discount rate (such as 7%), all costs and benefits after a decade are effectively zero, which means it never appears cost-effective to e.g. reduce fossil fuel emissions.] For example, if your discount rate is 4%, a dollar next year is worth the equivalent of about 96 cents today. More generally, with a discount rate of $\gamma$ (as a decimal), a dollar of benefits in $t$ years is worth $\$(1-\gamma)^t$ today.
+Suppose that we were interested in looking at temperature exceedances over 28°C. Decluster these occurrences and plot the number of exceedances by year. Have they increased over time? 
 
-The NPV of a sequence of money $x_t$ with discount rate $\gamma$ is the sum of all of the discounted values, that is, 
+#### Problem 3.2
 
-$$NPV = \sum_{t=0}^T x_t (1-\gamma)^t,$$ 
+Fit a stationary Poisson-GPD model for the exceedances. What does the GPD distribution look like? 
 
-where $T$ is the time horizon. We'll use a discount rate of 4% in this problem, which is typical for this type of problem, and a design horizon of 30 years.
+#### Problem 3.3
 
-For this problem, we will assume that the cost of elevating the house $\Delta h$ m is $C(\Delta h) = \mathbb{I}[h > 0](100,000 + 2,000\Delta h)$. 
+From your model, estimate the 100-year return level. How does it differ from the 100-year return period from the stationary model in Problem 2? Why do you think it agrees or disagrees?
 
-:::
-
-::: {.callout-tip}
-
-Be careful about the quantity you're estimating. Calculating the benefits of elevating by $\Delta h$ m requires calculating how the elevation *changes* the flooding damages over the design horizon *relative to a no-heightening baseline*.
-
-:::
-
-**In this problem**:
-
-- Using the extreme water level distribution from Problem 2, use Monte Carlo simulation to estimate the NPV of the benefits of elevation levels between 0 and 5m (you don't have to consider increments finer than 0.5m). What elevation heights pass the cost-benefit test? You can assume that the costs of elevation are all up front (that is, in year 0). 
-- What height (including a possible elevation of 0m) maximizes the NPV of net benefits (benefits - ocsts)?^[This is an example of **Monte Carlo optimization** as you are using Monte Carlo simulation to estimate the optimization objective function.] 
+## References
