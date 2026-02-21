@@ -94,6 +94,7 @@ The following packages are included in the environment (to help you find other s
 
 using Random # random number generation and seed-setting
 using DataFrames # tabular data structure
+using DataFramesMeta # some other dataframes interaction macros
 using CSV # reads/writes .csv files
 using Distributions # interface to work with probability distributions
 using Plots # plotting library
@@ -107,8 +108,8 @@ using Dates # date-time interface
 
 ### Scoring
 
-* Problem 1 is worth 4 points.
-* Problem 2 is worth 9 points.
+* Problem 1 is worth 5 points.
+* Problem 2 is worth 8 points.
 * Problem 3 is worth 7 points.
 * Problem 4 is worth 5 points.
 
@@ -120,11 +121,11 @@ Tide gauge data is complicated to analyze because it is influenced by different 
 
 #### Problem 1.1
 
-Load the data file. Take the difference between the observations and the sinusoidal predictions to obtain the tide level which could be attributed to weather-related variability (since for one year sea-level rise and other factors are unlikely to matter). Plot this data.
+Load the data file. Take the difference between the observations and the sinusoidal predictions to obtain the tide level which could be attributed to weather-related variability (since for one year sea-level rise and other factors are unlikely to matter). Plot this data. What autoregressive model order would you pick?
 
 #### Problem 1.2
 
-Develop an autoregressive (AR) model for the weather-related variability in the Norfolk tide gauge. Make sure to include your logic or exploratory analysis used in determining the model specification. You do not need to fit this model, but write out the specification that you've decided on.
+Fit an AR(1) model for the weather-related variability in the Norfolk tide gauge. Simulate 10,000 replications of this model, add the simulations back to the sinusoidal harmonics, and plot a histogram of the maximum and median tide levels from your simulations. How well does this model do in capturing these statistics from the observed dataset?
 
 
 ### Problem 2
@@ -164,7 +165,7 @@ Fit the model under the assumption of Gaussian i.i.d. residuals (include both an
 
 #### Problem 2.3
 
-Now redo Problem 2.2 but with an AR(1) model for the residuals. Does this look like a better probability model? Did your model parameter estimates change? If so, what changed about your conclusion(s) about the relationship between global mean temperture increases and global mean sea level rise?
+Now redo Problem 2.2 but with an AR(1) model for the residuals. You can assume that the residual AR(1) model has mean zero (so $\alpha = 0$). Did your model parameter estimates change? If so, what changed about your conclusion(s) about the relationship between global mean temperature increases and global mean sea level rise?
 
 
 ### Problem 3
@@ -182,7 +183,7 @@ Fit a stationary GEV model to the annual maximum series and report your paramete
 
 #### Problem 3.3
 
-Now fit a nonstationary GEV with respect to time (only the location parameter should be non-stationary), $y \sim \text{GEV}(\mu_0 + \mu_1 t, \sigma, \xi)$ (for scaling purposes, begin with $t=0$ corresponding to 1850). Plot how the 100 year return levels change over time. Do you get the same return level today as in Problem 2.3?
+Now fit a nonstationary GEV with respect to time (only the location parameter should be non-stationary), $y \sim \text{GEV}(\mu_0 + \mu_1 t, \sigma, \xi)$ (for scaling purposes, begin with $t=0$ corresponding to 1850). Plot how the 100 year return levels change over time. Do you get the same return level today as in Problem 3.2?
 
 
 ### Problem 4
@@ -199,6 +200,6 @@ Fit a stationary Poisson-GPD model for the exceedances. What does the GPD distri
 
 #### Problem 4.3
 
-From your model, estimate the 100-year return level. How does it differ from the 100-year return period from the stationary model in Problem 2? Why do you think it agrees or disagrees?
+From your model, estimate the 100-year return level. How does it differ from the 100-year return period from the stationary model in Problem 3? Why do you think it agrees or disagrees?
 
 ## References
