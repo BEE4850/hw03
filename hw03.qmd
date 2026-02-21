@@ -6,12 +6,31 @@ format:
         warning: true
         error: true
         fig-format: svg
+    pdf:
+        warning: true
+        error: true
+        keep-tex: true
+        fig-format: svg    
+        include-in-header: 
+            text: |
+                \usepackage{fvextra}
+                \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+        include-before-body:
+            text: |
+                \RecustomVerbatimEnvironment{verbatim}{Verbatim}{
+                showspaces = false,
+                showtabs = false,
+                breaksymbolleft={},
+                breaklines
+                % Note: setting commandchars=\\\{\} here will cause an error 
+                }
     ipynb:
         warning: true
         error: true
 engine: julia
 julia:
-    exeflags: ["+1.10.4"]
+    exeflags: ["+1.11.5"]
+format-links: [pdf]
 freeze: false
 ---
 
@@ -42,9 +61,10 @@ To do this assignment in Julia, you can find a Jupyter notebook with an appropri
 
 The goal of this homework assignment is to practice developing and working with probability models for data.
 
-* Problem 1 asks you to quantify uncertainties for a simple model using Bayesian statistics and rejection sampling.
-* Problem 2 asks you to use Monte Carlo simulation to calculate annual expected flooding damages.
-* Problem 3 (only required for students in BEE 5850) asks you to conduct cost-benefit analyses of housing elevation levels under future flooding uncertainty using Monte Carlo simulations.
+* Problem 1 asks you to diagnose autocorrelation and develop an AR model for the weather-based variability at the Sewell's Point tide gauge.
+* Problem 2 asks you to fit a sea-level rise model under both assumptions of Gaussian i.i.d. residuals and autocorrelated residuals.
+* Problem 3 asks you to conduct an analysis of extreme temperatures in Ithaca under both stationary and non-stationary assumptions.
+* Problem 4 asks you to model how often Ithaca temperatures exceed thresholds.
 
 :::
 
@@ -80,18 +100,20 @@ using Plots # plotting library
 using StatsBase # statistical quantities like mean, median, etc
 using StatsPlots # some additional statistical plotting tools
 using Optim # optimization tools
+using Dates # date-time interface
 ```
 
 ## Problems
 
 ### Scoring
 
-* Problem 1 is worth 13 points.
-* Problem 2 is worth 7 points.
-* Problem 3 is worth 5 points.
+* Problem 1 is worth 4 points.
+* Problem 2 is worth 9 points.
+* Problem 3 is worth 7 points.
+* Problem 4 is worth 5 points.
 
 
-### Problem 1
+### Problem 1 (4 points)
 
 
 Tide gauge data is complicated to analyze because it is influenced by different harmonic processes (such as the linear cycle). In this problem, we will develop a model for this data using [NOAA data from the Sewell's Point tide gauge](https://tidesandcurrents.noaa.gov/waterlevels.html?id=8638610) outside of Norfolk, VA from `data/norfolk-hourly-surge-2015.csv`. This is hourly data (in m) from 2015 and includes both the observed data (`Verified (m)`) and the tide level predicted by NOAA's sinusoidal model for periodic variability, such as tides and other seasonal cycles (`Predicted (m)`). 
@@ -102,44 +124,80 @@ Load the data file. Take the difference between the observations and the sinusoi
 
 #### Problem 1.2
 
-Develop an autoregressive (AR) model for the weather-related variability in the Norfolk tide gauge. Make sure to include your logic or exploratory analysis used in determining the model specification and fit the model.
-
-#### Problem 1.3
-
-Use your model to simulate 1,000 realizations of hourly tide gauge observations by adding simulations from your AR model back to the predicted sinusoidal trend. What is the distribution of the maximum tide level? How about the median tide level? How do these compare to the observed values? How do you explain your findings?
+Develop an autoregressive (AR) model for the weather-related variability in the Norfolk tide gauge. Make sure to include your logic or exploratory analysis used in determining the model specification. You do not need to fit this model, but write out the specification that you've decided on.
 
 
 ### Problem 2
 
-Let's look at how (modeled) annual maximum temperatures have (or have not) increased in Ithaca from 1850--2014. Model output from NOAA's GFDL-ESM4 climate model (one of the models used in the latest Climate Model Intercomparison Project, [CMIP6](https://colab.research.google.com/corgiredirector?site=https%3A%2F%2Fcds.climate.copernicus.eu%2Fcdsapp%23%21%2Fdataset%2Fprojections-cmip6%3Ftab%3Doverview)) is available in `data/gfdl-esm4-tempmax-ithaca.csv`. While this model output has not been bias-corrected, we won't worry about that for the purposes of this assignment. The temperature data is in degrees Celsius, and the dates are provided as calendar dates.
 
+Consider the following sea-level rise model from [Grinsted et al (2010)](https://doi.org/10.1007/s00382-008-0507-2), which models sea-level rise based on a linear relationship between global mean temperature and an "equilibrium" sea level:
+
+$$\begin{aligned}
+\frac{dS}{dt} &= \frac{S_\text{eq} - S}{\tau} \\
+S_\text{eq} &= aT + b,
+\end{aligned}
+$$
+
+where
+
+- $S(t)$ is the global mean sea level (in mm) at time $t$;
+- $\tau$ is the response time of sea level (in yrs);
+- $S_\text{eq}$ is the equilibrium sea-level (in mm) at temperature $T$ (in $^\circ$C);
+- $a$ is the sensitivity of $S_\text{eq}$ to $T$ (in mm/$^\circ$C);
+- $b$ is the intercept of $S_\text{eq}$, or the $S_\text{eq}$ when $T=0^\circ$C (in mm).
+
+As discussed in class, we can use a simple numerical integration method (forward Euler integration) to convert this differential equation into a difference equation, modeling an updated sea level state $S(t + \Delta t)$ as a function of $S(t)$ and the model parameters. We will also need an additional uncertain parameter $S_0 = S(0)$ to initialize the integrated model.
 
 #### Problem 2.1
 
-Load the (daily maximum) temperature data from `data/gfdl-esm4-tempmax-ithaca.csv`. Find the modeled annual maximum temperatures and plot them.
+Load the data from the `data/` folder and, following Grinsted et al (2010), normalize both datasets to a 1880-1900 mean (subtract that mean from the data).
+  * Global mean temperature data from the HadCRUT 5.0.2.0 dataset (<https://hadobs.metoffice.gov.uk/hadcrut5/data/HadCRUT.5.0.2.0/download.html>) can be found in `data/HadCRUT.5.0.2.0.analysis.summary_series.global.annual.csv`. This data is averaged over the Northern and Southern Hemispheres and over the whole year. 
+  * Global mean sea level anomalies (relative to the 1990 mean global sea level) are in `data/CSIRO_Recons_gmsl_yr_2015.csv`, courtesy of CSIRO (<https://www.cmar.csiro.au/sealevel/sl_data_cmar.html>). The standard deviation of the estimate is also added for each year.
 
-#### Problem 2.2
+Plot the resulting datasets.
 
-Fit a stationary GEV model to the annual maximum series and report your parameter estimates. Plot the fitted distribution along with the data. What type of GEV distribution did you end up with? What is the 100-year return level?
+#### Problem 2.2 
+
+Write a function to simulate global mean sea levels under a set of model parameters after discretizing the equations above with a timestep of $\delta t = 1$ yr. You will need to subset the temperature data to the years where you also have sea-level data.
+
+Fit the model under the assumption of Gaussian i.i.d. residuals (include both an uncertain model error term and the standard deviation of the observations in the probability model specification) by maximizing the likelihood. Report the parameter estimates. What can you conclude about the relationship between global mean temperature increases and global mean sea level rise rates? How appropriate was the Gaussian i.i.d. probability model for the residuals? Use any needed quantitative or qualitative assessments of goodness of fit to justify your answer. If this was not an appropriate probability model, what would you change?
 
 #### Problem 2.3
 
-Now fit a nonstationary GEV with respect to time (only the location parameter should be non-stationary), $y \sim \text{GEV}(\mu_0 + \mu_1 t, \sigma, \xi)$ (for scaling purposes, begin with $t=0$ corresponding to 1850). Plot how the 100 year return levels change over time. Do you get the same return level today as in Problem 2.3?
+Now redo Problem 2.2 but with an AR(1) model for the residuals. Does this look like a better probability model? Did your model parameter estimates change? If so, what changed about your conclusion(s) about the relationship between global mean temperture increases and global mean sea level rise?
 
 
 ### Problem 3
 
-Now let's analyze how often the Ithaca temperature data exceeds certain thresholds.
+Let's look at how (modeled) annual maximum temperatures have (or have not) increased in Ithaca from 1850--2014. Model output from NOAA's GFDL-ESM4 climate model (one of the models used in the latest Climate Model Intercomparison Project, [CMIP6](https://colab.research.google.com/corgiredirector?site=https%3A%2F%2Fcds.climate.copernicus.eu%2Fcdsapp%23%21%2Fdataset%2Fprojections-cmip6%3Ftab%3Doverview)) is available in `data/gfdl-esm4-tempmax-ithaca.csv`. While this model output has not been bias-corrected, we won't worry about that for the purposes of this assignment. The temperature data is in degrees Celsius, and the dates are provided as calendar dates.
+
 
 #### Problem 3.1
 
-Suppose that we were interested in looking at temperature exceedances over 28°C. Decluster these occurrences and plot the number of exceedances by year. Have they increased over time? 
+Load the (daily maximum) temperature data from `data/gfdl-esm4-tempmax-ithaca.csv`. Find the modeled annual maximum temperatures and plot them.
 
 #### Problem 3.2
 
-Fit a stationary Poisson-GPD model for the exceedances. What does the GPD distribution look like? 
+Fit a stationary GEV model to the annual maximum series and report your parameter estimates. Plot the fitted distribution along with the data. What type of GEV distribution did you end up with? What is the 100-year return level?
 
 #### Problem 3.3
+
+Now fit a nonstationary GEV with respect to time (only the location parameter should be non-stationary), $y \sim \text{GEV}(\mu_0 + \mu_1 t, \sigma, \xi)$ (for scaling purposes, begin with $t=0$ corresponding to 1850). Plot how the 100 year return levels change over time. Do you get the same return level today as in Problem 2.3?
+
+
+### Problem 4
+
+Now let's analyze how often the Ithaca temperature data exceeds certain thresholds.
+
+#### Problem 4.1
+
+Suppose that we were interested in looking at temperature exceedances over 28°C. Decluster these occurrences and plot the number of exceedances by year. Have they increased over time? 
+
+#### Problem 4.2
+
+Fit a stationary Poisson-GPD model for the exceedances. What does the GPD distribution look like? 
+
+#### Problem 4.3
 
 From your model, estimate the 100-year return level. How does it differ from the 100-year return period from the stationary model in Problem 2? Why do you think it agrees or disagrees?
 
